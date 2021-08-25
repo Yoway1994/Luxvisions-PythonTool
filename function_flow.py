@@ -1,7 +1,4 @@
-import numpy as np
-import pandas as pd
 from golden_limit_select import GoldenLimitSelect
-
 
 def execute_function_flow(cfg):
     command = display_section_on_cmd(cfg)
@@ -17,11 +14,13 @@ def run_test(section):
 
 def run_golden_limit(section):
     gls = GoldenLimitSelect(section)
-    df_res = gls.get_diff_dataframe()
-    gls.gen_golden_limit_txt(df_res)
+    gls.select_sample()
 
-    return None
+def run_golden_limit_marker(section):
+    gls = GoldenLimitSelect(section) 
+    gls.mark_sample()
 
 run_action = {
     "TEST":         run_test,
-    "GOLDEN_LIMIT": run_golden_limit,}
+    "GOLDEN_LIMIT": run_golden_limit,
+    "MARKER"      : run_golden_limit_marker,}
