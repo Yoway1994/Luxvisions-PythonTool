@@ -16,17 +16,17 @@ p_bg_ratio = re.compile(r"b/gr\s+([.\d]+)")
 
 path = "./golden_limit_select"
 fname = {
-    "txt": "AWB_LSC_GOLDEN_LIMIT_SAMPLE.txt",
-    "xls": "AWB_LSC_GOLDEN_LIMIT_SAMPLE.xlsx",
-    "smp": "SAMPLE_LIST.txt",}
-
-def f_name(key):
-    return os.path.join(path, fname[key])
+    "txt": "_AWB_LSC_GOLDEN_LIMIT_SAMPLE.txt",
+    "xls": "_AWB_LSC_GOLDEN_LIMIT_SAMPLE.xlsx",
+    "smp": "_SAMPLE_LIST.txt",}
 
 class GoldenLimitSelect:
     def __init__(self, section):
-        self.sec = section
-        self.yes = ["Yes", "True", "yes", "true", "1"]
+     self.sec = section
+     self.yes = ["Yes", "True", "yes", "true", "1"]
+
+    def f_name(self, key):
+        return os.path.join(path, self.sec["group_name"]+fname[key])
 
     def get_folder_path(self):
         l_f = []
@@ -41,14 +41,13 @@ class GoldenLimitSelect:
         return count
 
     def select_sample(self):
-        if self.sec["truncate"] in self.yes:self.truncate_log() 
+        if self.sec["truncate"] in self.yes: self.truncate_log() 
         df_GLS = self.get_diff_dataframe()
-        if self.sec["write_excel"] in self.yes:self.excel_save(df_GLS)
+        if self.sec["write_excel"] in self.yes: self.excel_save(df_GLS)
         self.gen_golden_limit_txt(df_GLS[["FuseID","LSC_diff","AWB_diff"]])
 
     def mark_sample(self):
-        dir = self.get_folder_path()[0]
-        with open(f_name("smp")) as smp:
+        with open(self.f_name("smp")) as smp:
             print(re.split(f"Folder: {dir}\n", smp.read()))
         return None
 
@@ -60,7 +59,7 @@ class GoldenLimitSelect:
         arry_2_ratio = np.zeros((2, num), dtype = np.float64)
         index = 0
         id_list = []
-        smp_list = open(f_name("smp"), "a+")
+        smp_list = open(self.f_name("smp"), "a+")
         for dir in fdr:
             smp_list.write(f"Folder: {dir}\n")
             for txt in os.listdir(dir):
@@ -118,7 +117,7 @@ class GoldenLimitSelect:
             for i, line in enumerate(df, 1):
                 id, data = line
                 lg[0] += f"{i:02d}, {id}, {data}\n"
-        with open(f_name("txt"), "a+") as file:
+        with open(self.f_name("txt"), "a+") as file:
             line_data(log, df_awb.head(num).values , "AWB Golden Sample")
             line_data(log, df_awb.tail(num)[::-1].values, "AWB Limit Sample")
             line_data(log, df_lsc.head(num).values,"LSC Golden Sample")
@@ -126,18 +125,34 @@ class GoldenLimitSelect:
             file.write(log[0])
 
     def truncate_log(self):
-        with open(f_name("txt"), "w+"):
+        with open(self.f_name("txt"), "w+"):
             pass
-        with open(f_name("smp"), "w+"):
+        with open(self.f_name("smp"), "w+"):
             pass
     
     @timer
     def excel_save(self, df):
-        if not os.path.isfile(f_name("xls")):
-            pd.DataFrame().to_excel(f_name("xls"))
-        book = load_workbook(f_name("xls"))
-        writer = pd.ExcelWriter(f_name("xls"), engine="openpyxl")
+        if not os.path.isfile(self.f_name("xls")):
+            pd.DataFrame().to_excel(self.f_name("xls"))
+        book = load_workbook(self.f_name("xls"))
+        writer = pd.ExcelWriter(self.f_name("xls"), engine="openpyxl")
         writer.book = book
         writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-        df.to_excel(writer, self.sec["sheet_name"])
+        df.to_excel(writer, self.sec["group_name"])
         writer.save()
+
+    # def HighLightAWB5000K(cell):
+    #     if cell in Set502:
+    #         return 'background-color: %s' % color502
+    #     elif cell in Set503-SetAWB5000K:
+    #         return 'background-color: %s' % color503
+    #     elif cell in SetAWB5000K:
+    #         return 'background-color: %s' % color
+    #     else:
+    #         pass
+
+    # def main():
+    #     AWB2800K.applymap(HighLightAWB2800K)
+    #     LSC2800K.applymap(HighLightLSC2800K)
+    #     AWB5000K.applymap(HighLightAWB5000K)
+    #     LSC5000K.applymap(HighLightLSC5000K)
